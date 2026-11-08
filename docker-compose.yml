@@ -1,0 +1,9 @@
+services:
+  netzwerk-rally:
+    build: .
+    image: netzwerk-rally:latest
+    pull_policy: build
+    container_name: netzwerk-rally
+    ports:
+      - "3021:3000"
+    restart: unless-stopped
