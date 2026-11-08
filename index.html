@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Netzwerk-Rallye</title>
+<style>
+body{font-family:Calibri,Arial,sans-serif;max-width:640px;margin:0 auto;padding:16px;background:#0f172a;color:#e2e8f0}
+h1,h2{margin:.3em 0}input,button{font:inherit;padding:10px;border-radius:8px;border:0;margin:4px 0}
+input{width:100%;box-sizing:border-box}button{background:#2563eb;color:#fff;cursor:pointer;width:100%;text-align:left}
+button:hover{background:#1d4ed8}.card{background:#1e293b;border-radius:12px;padding:14px;margin:10px 0}
+.log div{margin:4px 0;font-size:.95em}.me{color:#facc15}.hint{opacity:.7}
+</style></head><body>
+<h1>🌐 Netzwerk-Rallye</h1><div id="app"></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const s=io(),app=document.getElementById('app');let st=null;
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function join(){s.emit('join',{room:room.value,name:nm.value})}
+function login(){app.innerHTML='<div class="card"><input id="nm" placeholder="Dein Name"><input id="room" placeholder="Raumcode (z. B. FISI1)"><button style="text-align:center" onclick="join()">Beitreten</button></div>'}
+s.on('err',m=>alert(m));
+s.on('state',x=>{st=x;render()});
+function render(){const x=st;let h='<div class="card">Raum <b>'+esc(x.code)+'</b> · Team-Punkte: <b>'+x.score+'</b><br>Spieler: '+x.players.map(p=>p===x.me?'<span class="me">'+esc(p)+'</span>':esc(p)).join(', ')+'</div>';
+ if(x.phase==='lobby'){h+=x.host===x.me?'<button style="text-align:center" onclick="s.emit(\'start\')">Spiel starten</button>':'<p class="hint">Warte, bis '+esc(x.host)+' startet …</p>'}
+ else if(x.phase==='done'){h+='<div class="card"><h2>🏆 Geschafft!</h2>Ihr habt alle Missionen gelöst. Punkte: '+x.score+'</div>'}
+ else{h+='<div class="card"><h2>'+esc(x.title)+'</h2><div class="hint">Mission '+(x.mi+1)+'/'+x.total+' · Schritt '+(x.step+1)+'/'+x.steps+'</div><p>'+esc(x.intro)+'</p><p><b>'+esc(x.q)+'</b></p>';
+  if(x.opts)h+=x.opts.map((o,i)=>'<button data-i="'+i+'">'+esc(o)+'</button>').join('');else h+='<p class="hint">Am Zug: <b>'+esc(x.who)+'</b> – unterstützt mit Tipps!</p>';
+  h+='</div>'}
+ h+='<div class="card log">'+x.log.map(l=>'<div>'+esc(l)+'</div>').join('')+'</div>';
+ app.innerHTML=h;app.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>s.emit('answer',st.opts[b.dataset.i]))}
+login();
+</script></body></html>
